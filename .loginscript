@@ -1,0 +1,123 @@
+#! /bin/bash
+
+export PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND$"\n"}history -a"
+
+mkdir -p ${HOME}/bin
+# https://github.com/git/git/blob/master/contrib/completion/git-prompt.sh
+if [[ ! -e ${HOME}/bin/bash_git ]]
+  then
+    wget --quiet -O ${HOME}/bin/bash_git "https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh"
+fi
+[[ -f ${HOME}/bin/bash_git ]] && . ${HOME}/bin/bash_git
+export GIT_PS1_SHOWDIRTYSTATE=true
+export GIT_PS1_SHOWUNTRACKEDFILES=true
+
+# https://github.com/jonmosco/kube-ps1
+if [[ ! -e ${HOME}/bin/kube-ps1 ]]
+  then
+    wget --quiet -O ${HOME}/bin/kube-ps1 "https://raw.githubusercontent.com/jonmosco/kube-ps1/master/kube-ps1.sh"
+fi
+[[ -f ${HOME}/bin/kube-ps1 ]] && . ${HOME}/bin/kube-ps1
+export KUBE_PS1_PREFIX='{'
+export KUBE_PS1_SUFFIX='}'
+export KUBE_PS1_SYMBOL_ENABLE=false
+export KUBE_PS1_SYMBOL_PADDING=false
+export KUBE_PS1_SYMBOL_USE_IMG=false
+
+if [[ `whoami` == "root" ]]
+  then
+    export PS1="\[$(tput sgr0)\]\[\033[38;5;250m\]\d \t\[$(tput sgr0)\] \[$(tput bold)\]\[\033[38;5;160m\]\u@\h\[$(tput sgr0)\] \[$(tput sgr0)\]\[\033[38;5;33m\][\$?]\[$(tput sgr0)\] \[\e[1;37m\]\w\[\e[0;37m\] \n\[$(tput sgr0)\]\\$ \[$(tput sgr0)\]"
+  else
+    export PS1="\[$(tput sgr0)\]\[\033[38;5;250m\]\d \t\[$(tput sgr0)\] \[$(tput bold)\]\[\033[38;5;10m\]\u@\h\[$(tput sgr0)\] \[$(tput sgr0)\]\[\033[38;5;33m\][\$?]\[$(tput sgr0)\] \[\e[1;37m\]\w\[\e[0;37m\] \$(kube_ps1)\[\033[0;32m\]\$(__git_ps1)\[$(tput sgr0)\]\n\[$(tput sgr0)\]\\$\[$(tput sgr0)\] "
+fi
+
+export DATE=$(date +"%Y%m%d")
+export DATEF=$(date +"%Y%m%d_%H%M%S")
+export DATEY=$(date +"%Y%m%d" -d "yesterday")
+export DATET=$(date +"%Y%m%d" -d "tomorrow")
+export PATH=$PATH:/usr/local/go/bin:/games:/usr/games:${HOME}/bin:/sbin:${HOME}/.local/bin/:${HOME}/.cargo/bin
+export EDITOR="vim"
+export PYTHONSTARTUP="${HOME}/.pythonrc"
+export GPG_TTY=$(tty)
+
+export LESSCHARSET="utf-8"
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LANGUAGE=en_US.UTF-8
+
+# Rust stuff
+#export PATH=/usr/local/cargo/bin:$PATH
+#export CARGO_HOME=/usr/local/cargo
+#export RUSTUP_HOME=/usr/local/rustup
+
+# Proxy settings
+#export http_proxy="http://user:password@host:port/"
+#export ftp_proxy=$http_proxy
+#export https_proxy=$http_proxy
+#export HTTP_PROXY=$http_proxy
+#export FTP_PROXY=$http_proxy
+#export HTTPS_PROXY=$http_proxy
+
+# Allow a larger console history
+shopt -s histappend
+shopt -s cmdhist
+export HISTCONTROL="ignoreboth"
+export HISTTIMEFORMAT="[%F %T] "
+export HISTFILESIZE=-1
+export HISTSIZE=-1
+export HISTIGNORE='ls:ll:la:bg:fg:history:pwgen:newpwd:w:reboot:poweroff:halt:sudo reboot:sudo poweroff'
+
+mkcdir () {
+  mkdir -p -- "$1" &&
+  cd -P -- "$1"
+}
+
+alias cp='cp -v'
+alias mv='mv -v'
+alias rm='rm -vi'
+alias up='cd ..'
+alias ls='ls -F --color=auto'
+alias ll='ls -lh'
+alias la='ll -a'
+alias laa='ll -d .[a-zA-Z0-9]*'
+alias lld='ll -d'
+alias grep='grep --color=auto'
+alias loadavg='cat /proc/loadavg'
+alias myproc='htop -u $USER'
+alias newpwd='pwgen -cns1vB'
+alias showports='ss -nltup'
+alias vimhosts="sudo vim /etc/hosts ; [[ -f /usr/sbin/nscd ]] && sudo /usr/sbin/nscd -i hosts"
+alias hosts="grep -v -e ^# -e ^$ -e ip6 -e localhost -e ^127 /etc/hosts | sort -Vk1 | column -t"
+alias myip="dig +short a myip.opendns.com @resolver1.opendns.com"
+
+AWSCLI=`which aws_completer 2> /dev/null`
+[[ ! -z ${AWSCLI} ]] && [[ -f ${AWSCLI} ]] && complete -C aws_completer aws
+
+if [[ ! -z "$(which doctl)" ]]
+  then
+    source <(doctl completion bash)
+fi
+
+# git clone https://github.com/tfutils/tfenv.git ~/.tfenv
+TFENV_FOLDER="${HOME}/.tfenv"
+if [[ -d ${TFENV_FOLDER} || ! -z "$(which tfenv 2> /dev/null)" ]]
+  then
+    if [[ -d ${TFENV_FOLDER} ]]
+      then
+        export PATH="${HOME}/.tfenv/bin:$PATH"
+        TF_VERSION=$(cat ${HOME}/.tfenv/version)
+        complete -C ${TFENV_FOLDER}/versions/${TF_VERSION}/terraform terraform
+      else
+        complete -C $(which terraform) terraform
+    fi
+fi
+
+if [[ ! -z "$(which kubectl)" ]]
+  then
+    source <(kubectl completion bash)
+    export PATH="${PATH}:${HOME}/.krew/bin"
+    alias k=kubectl
+    complete -F __start_kubectl k
+fi
+
+[[ -f ${HOME}/.loginscript_extras ]] && . ${HOME}/.loginscript_extras
