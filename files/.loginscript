@@ -89,6 +89,7 @@ alias showports='ss -nltup'
 alias vimhosts="sudo vim /etc/hosts ; [[ -f /usr/sbin/nscd ]] && sudo /usr/sbin/nscd -i hosts"
 alias hosts="grep -v -e ^# -e ^$ -e ip6 -e localhost -e ^127 /etc/hosts | sort -Vk1 | column -t"
 alias myip="dig +short a myip.opendns.com @resolver1.opendns.com"
+alias sudo="sudo -E"
 
 AWSCLI=`which aws_completer 2> /dev/null`
 [[ ! -z ${AWSCLI} ]] && [[ -f ${AWSCLI} ]] && complete -C aws_completer aws

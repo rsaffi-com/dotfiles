@@ -1,1 +1,9 @@
 kubeoff
+
+if ( lsb_release -is ) == "Arch" ; then
+  alias systemupdate='yay --noconfirm --answerclean=none --answerdiff=none -Syyu'
+else
+  alias systemupdate='sudo apt update && echo && sudo apt full-upgrade -y && echo && sudo apt auto-remove && sudo apt clean'
+fi
+
+alias sysup='systemupdate'
